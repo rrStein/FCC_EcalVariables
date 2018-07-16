@@ -225,40 +225,66 @@ for event in intree:
     cal1E2max = -1.
     cal1Etamax = -1.
     cal1Eta2max = -1.
+    cal1Phimax = -1.
+    cal1Phi2max = -1.
 
     for c in event.ECalBarrelCells:
 
         if ecalBarrel_decoder.get(c.core.cellId, "layer") == 1:
-            Cell = ecalBarrel_decoder.get(c.core.cellId, "eta")
+
+            Eta = ecalBarrel_decoder.get(c.core.cellId, "eta")
             cal1E = c.core.energy
-            eta = int(Cell) - 169*0.01
-            phi = ecalBarrel_decoder.get(c.core.cellId, "phi")
-            Ecal_Eta.append(eta)
-            Ecal_cell.append(Cell)
+            eta = int(Eta) - 169*0.01
+            Phi = ecalBarrel_decoder.get(c.core.cellId, "phi")
+            Ecal_Eta.append(Eta)
+            Ecal_cell.append(int(str(Eta)+str(Phi)))
             Ecal1_E.append(cal1E)
-            Ecal_Phi.append(phi)
+            Ecal_Phi.append(Phi)
+
             if cal1E >= cal1Emax or cal1E > cal1E2max:
 
-                if cal1E > cal1Emax:
+                if len(Ecal1_E) < 2:
 
-                    cal1E2max = cal1Emax
-                    cal1Eta2max = cal1Etamax
                     cal1Emax = cal1E
-                    cal1Etamax = Cell
+                    cal1Etamax = Eta
+                    cal1Phimax = Phi
+
+                elif cal1E > cal1Emax:
+
+                    if Phi != Ecal_Phi[Ecal1_E.index(cal1Emax)]:
+
+                        cal1E2max = cal1Emax
+                        cal1Eta2max = cal1Etamax
+                        cal1Phi2max = cal1Phimax
+                        cal1Emax = cal1E
+                        cal1Etamax = Eta
+                        cal1Phimax = Phi
+
+                    else:
+
+                        cal1Emax = cal1E
+                        cal1Etamax = Eta
+                        Cal1Phimax = Phi
 
                 else:
 
                     cal1E2max = cal1E
-                    cal1Eta2max = Cell
+                    cal1Eta2max = Eta
+                    cal1Phi2max = Phi
+
 
         numHits += 1
 
     Cellids = n.array(Ecal_cell)
     Energies = n.array(Ecal1_E)
+    Etas = n.array(Ecal_Eta)
+    Phis = n.array(Ecal_Phi)
+
    # if cal1Emax == 0. or cal1E2max == 0:
        # print cal1Emax, cal1E2max, Energies
     #print "All recorded energies: ", Energies
-    #print "No. of energies: ", len(Energies), "No. of cells: ", len(Cellids), "No. of unique cells: ", len(n.unique(Cellids))
+    #print Cellids, "\n", n.unique(Cellids)
+    '''print "No. of energies: ", len(Energies), "No. of cells: ", len(Cellids), "No. of unique cells: ", len(n.unique(Cellids))
     print "1st maximum: ", cal1Emax, "and cell: ", cal1Etamax
     print "2nd maximum: ", cal1E2max, "and cell: ",  cal1Eta2max
     print "The energies using numpy.where: 1st max: ", Energies[n.where(Energies == cal1Emax)[0][0]], "2nd max: ",Energies[n.where(Energies == cal1E2max)[0][0]]
@@ -266,21 +292,18 @@ for event in intree:
     ev_nRechits[0] = numHits
     print "\n"
     print "test n.where: ", Cellids[n.where(Energies == cal1Emax)[0]], Energies[n.where(Energies == cal1Emax)[0]]
-    print "\n"
-    if cal1Etamax != Cellids[n.where(Energies == cal1Emax)[0][0]]:
-        print "numpy fail"
-        print "\n"
+    print "\n"'''
     if len(Energies) > 2:
-        w3st[0] = Shower_width(Energies, Cellids, 3)
-        w21st[0] = Shower_width(Energies, Cellids, 21)
+        w3st[0] = Shower_width(Energies, Phis, 3)
+        w21st[0] = Shower_width(Energies, Phis, 21)
 
-        eocore[0] = eocorey(cal1Emax, Cellids, Energies)
+        eocore[0] = eocorey(cal1Emax, Phis, Energies)
         e2max[0] = cal1E2max
         emax[0] = cal1Emax
-        if Cellids[n.where(Energies == cal1E2max)[0][0]] != Cellids[n.where(Energies == cal1Emax)[0][0]]:
-            edmax[0] = edmaxy(cal1Emax, cal1E2max, Cellids, Energies)
-        else:
-            continue
+        #if Phis[n.where(Energies == cal1E2max)[0][0]] != Phis[n.where(Energies == cal1Emax)[0][0]]:
+        edmax[0] = edmaxy(cal1Emax, cal1E2max, Phis, Energies)
+        #else:
+        #    continue
     else:
         continue
 
