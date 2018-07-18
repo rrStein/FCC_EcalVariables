@@ -43,29 +43,28 @@ def signy(y):
     elif y<0: return -1
     return 0
 
-def Shower_width(Energies, Cellids, wxst):
+# Function for calculating the shower width on n cells in cell units. imax describes the cells
+# cell with maximum energy deposit.
 
-    #strips = n.unique(Cellids)
+def Shower_width(Energies, Cells, n):
+
     top = 0
     bot = 0
-    '''cellenergies = n.zeros(len(strips),dtype=float)
-    i = 0
-
-    try:
-        for cell in strips:
-            cellenergies[n.where(strips == cell)[0][0]] = sum(Energies[n.where(Cellids == cell)[0]])
-
-    except(ValueError):
-        return "NaN"'''
     k = 0
-    imaxphi = int(Cellids[n.argmax(Energies)][0])
-    imaxeta = int(Cellids[n.argmax(Energies)][1])
-    while k < wxst:
-        for i in Cellids:
+    imaxphi = int(Cells[n.argmax(Energies)][0])
+    imaxeta = int(Cells[n.argmax(Energies)][1])
+
+    # Loop over n total selected cells.
+    while k < n:
+        # Loop over all detected cells.
+        for i in Cells:
+            # In case no cells were found the value will be 0.
             try:
-                if int(i[0]) + int(i[1]) > (imaxphi + imaxeta - wxst) and int(i[0]) + int(i[1]) < (imaxphi + imaxeta + wxst):
-                    top += sum(Energies[n.where(Cellids == i)[0]])*(((int(i[0])+int(i[1])-imaxphi-imaxeta)**2))
-                    bot += sum(Energies[n.where(Cellids == i)[0]])
+                # Condition to choose only cells within n cell units of imax and sum the recorded
+                # energies multiplied by the difference in cell and imax squared.
+                if int(i[0]) + int(i[1]) > (imaxphi + imaxeta - n) and int(i[0]) + int(i[1]) < (imaxphi + imaxeta + n):
+                    top += sum(Energies[n.where(Cells == i)[0]])*(((int(i[0])+int(i[1])-imaxphi-imaxeta)**2))
+                    bot += sum(Energies[n.where(Cells == i)[0]])
 
                     k += 1
 
@@ -77,95 +76,88 @@ def Shower_width(Energies, Cellids, wxst):
                 top += 0
                 bot += 0
 
-        
 
+    # Divide the sum of energies times the difference in cell and imax squared by the sum of Energies
+    # and take the square root for the shower width.
 	Wnst = m.sqrt((top/bot))
     return Wnst
 
-def edmaxy(Emax,E2ndmax,Cellids,Energies):
+# Function for finding the difference of the energy in the cell with the second maximum and the
+# energy in the cell with the minimal value between the first and second maximum.
+def edmaxy(Emax,E2ndmax,Cells,Energies):
 
+# Define the cells with the 1st and 2nd maximum in terms of eta and phi.
     try:
 
-        strip2max = Cellids[n.where(Energies == E2ndmax)[0][0]]
-        strip2maxphi = int(strip2max[0])
-        strip2maxeta = int(strip2max[1])
-        stripmax = Cellids[n.where(Energies == Emax)[0][0]]
-        stripmaxphi = int(stripmax[0])
-        stripmaxeta = int(stripmax[1])
+        cell2max = Cells[n.where(Energies == E2ndmax)[0][0]]
+        cell2maxphi = int(cell2max[0])
+        cell2maxeta = int(cell2max[1])
+        cellmax = Cells[n.where(Energies == Emax)[0][0]]
+        cellmaxphi = int(cellmax[0])
+        cellmaxeta = int(cellmax[1])
 
     except(IndexError):
 
         print "indexerror"
         return -1
 
-    #strip2E = 0.
-    stripminE = []
+    cellminE = []
     i = 0
 
-    while i < len(Cellids):
+# Loop over all the cells recorded.
+    while i < len(Cells):
 
-        #if int(Cellids[i][0]) == strip2maxphi:
-        #    strip2E += Energies[i]
-
-        if (int(Cellids[i][0]) >= strip2maxphi and int(Cellids[i][0]) <= stripmaxphi) or (int(Cellids[i][0]) >= stripmaxphi and int(Cellids[i][0]) <= strip2maxphi):
-            if (int(Cellids[i][1]) >= strip2maxeta and int(Cellids[i][1]) <= stripmaxeta) or (int(Cellids[i][1]) >= stripmaxeta and int(Cellids[i][1]) <= strip2maxeta):
-                stripminE.append(Energies[i])
+        # Condition to choose only cells that are on the same phi and eta values as the 1st and
+        # 2nd maximum or inbetween these phi and eta values. Record all the energies in these cells.
+        if (int(Cells[i][0]) >= cell2maxphi and int(Cells[i][0]) <= cellmaxphi) or (int(Cells[i][0]) >= cellmaxphi and int(Cells[i][0]) <= cell2maxphi):
+            if (int(Cells[i][1]) >= cell2maxeta and int(Cells[i][1]) <= cellmaxeta) or (int(Cells[i][1]) >= cellmaxeta and int(Cells[i][1]) <= cell2maxeta):
+                cellminE.append(Energies[i])
 
         i += 1
 
-    if stripminE == []:
+    # If there were no cells matching the condition then return 0 for edmax.
+    if cellminE == []:
 
         return 0.
 
+    # Otherwise take the minimum value of all the recorded energies in the cells matching the condition.
     else:
 
-        nstripminE = n.array(stripminE)
-        minE = n.amin(nstripminE)
+        ncellminE = n.array(cellminE)
+        minE = n.amin(ncellminE)
 
-    '''stripmin = Cellids[n.where(Energies == minE)[0][0]]
-    #print stripmin
-    #print stripmin, stripmax, strip2max
-    minstripE = 0.
-    i = 0
-
-    while i < len(Cellids):
-
-        if Cellids[i] == stripmin:
-            minstripE += Energies[i]
-
-        i += 1'''
-
+    # Return the difference of the 2nd maximum and the minimum in the valley in between 1st and 2nd maximum.
     edmax = E2ndmax - minE
     return edmax
 
-def eocorey(Emax,Cellids,Energies):
-    '''try:
-        cells = n.unique(Cellids)
-        cellenergies = n.zeros(len(cells),dtype=float)
-        for cell in cells:
-            cellenergies[n.where(cells == cell)[0][0]] = sum(Energies[n.where(Cellids == cell)[0]])
-            '''
-    stripmaxphi = int(Cellids[n.argmax(Energies)][0])
-    stripmaxeta = int(Cellids[n.argmax(Energies)][1])
-    #except(IndexError):
-    #    return 0
+# Function to find the energy deposited outside of the shower core.
+def eocorey(Emax,Cells,Energies,n):
+
+    # Define the cell with maximum energy deposit in terms of phi and eta.
+    cellmaxphi = int(Cells[n.argmax(Energies)][0])
+    cellmaxeta = int(Cells[n.argmax(Energies)][1])
     E3 = 0.
     E1 = 0.
     i = 0
 
-    while i < len(Cellids):
+    # Loop over all recorded cells.
+    while i < len(Cells):
 
-        if int(Cellids[i][0]) + int(Cellids[i][1]) <= stripmaxphi + stripmaxeta + 3 and int(Cellids[i][0])+int(Cellids[i][1]) >= stripmaxphi + stripmaxeta - 3:
+        # Choose only cells that are within +/- n cells around (and including) the cell with maximum energy deposit
+        # and sum the energies deposited in these cells.
+        if int(Cells[i][0]) + int(Cells[i][1]) <= cellmaxphi + cellmaxeta + n and int(Cells[i][0])+int(Cells[i][1]) >= cellmaxphi + cellmaxeta - n:
             E3 += Energies[i]
 
-            if int(Cellids[i][0]) + int(Cellids[i][1]) <= stripmaxphi + stripmaxeta + 1 and int(Cellids[i][0])+int(Cellids[i][1]) >= stripmaxphi + stripmaxeta - 1:
+            # Choose only cells that are within +/- 1 cells around (and including) the cell with maximum energy deposit
+            # and sum the energies deposited in these cells.
+            if int(Cells[i][0]) + int(Cells[i][1]) <= cellmaxphi + cellmaxeta + 1 and int(Cells[i][0])+int(Cells[i][1]) >= cellmaxphi + cellmaxeta - 1:
                 E1 += Energies[i]
-
         i += 1
 
     eocore = (E3 - E1) / E1
     return eocore
 
+# Define the variables that are to be found/converted.
 ev_num = n.zeros(1, dtype=int)
 ev_nRechits = n.zeros(1, dtype=int)
 e2max = n.zeros(1, dtype=float)
@@ -201,7 +193,7 @@ if os.path.isfile(outfile_name) == False:
     outtree.Branch("w3st", w3st, "w3st/D")
     outtree.Branch("w21st", w21st, "w21st/D")
 
-
+# If the output root file already exists, update it.
 else:
     infile=r.TFile.Open(infile_name)
     intree=infile.Get('events')
@@ -220,6 +212,7 @@ else:
     outtree.SetBranchAddress("w3st", w3st)
     outtree.SetBranchAddress("w21st", w21st)
 
+# Loop over all events in the input file.
 numEvent = 0
 for event in intree:
     ev_num[0] = numEvent
@@ -238,29 +231,37 @@ for event in intree:
     cal1Phimax = -1.
     cal1Phi2max = -1.
 
+    # Loop over everything recorded in the ecal barrel cells for each event.
     for c in event.ECalBarrelCells:
 
+        # Choose only the second layer of the barrel.
         if ecalBarrel_decoder.get(c.core.cellId, "layer") == 1:
 
+            # Record all energies and cells with their phi and eta values in the layer.
             Eta = ecalBarrel_decoder.get(c.core.cellId, "eta")
             cal1E = c.core.energy
-            eta = int(Eta) - 169*0.01
+            #eta = int(Eta) - 169*0.01
             Phi = ecalBarrel_decoder.get(c.core.cellId, "phi")
             Ecal_Eta.append(Eta)
             Ecal_cell.append([Phi,Eta])
             Ecal1_E.append(cal1E)
             Ecal_Phi.append(Phi)
 
+            # If the energy found is larger than the 1st or 2nd maximum defined in previous iteration
+            # redefine them accordingly
             if cal1E >= cal1Emax or cal1E > cal1E2max:
 
+                # If it is the first iteration just set the values as the 1st maximum
                 if len(Ecal1_E) < 2:
 
                     cal1Emax = cal1E
                     cal1Etamax = Eta
                     cal1Phimax = Phi
 
+                # If the recorded energy is greater than the previous 1st maximum...
                 elif cal1E > cal1Emax:
-
+                    # ...and not in the same phi slice, then set the 2nd maximum as the previous 1st maximum
+                    # and update the 1st maximum.
                     if Phi != Ecal_Phi[Ecal1_E.index(cal1Emax)]:
 
                         cal1E2max = cal1Emax
@@ -270,12 +271,16 @@ for event in intree:
                         cal1Etamax = Eta
                         cal1Phimax = Phi
 
+                    # If it is in the same phi slice, then set it as a new 1st maximum without updating the 2nd
+                    # maximum.
                     else:
 
                         cal1Emax = cal1E
                         cal1Etamax = Eta
                         Cal1Phimax = Phi
 
+                # If it is not larger than the 1st maximum then it must be larger than the 2nd maximum and
+                # in this case update the 2nd maximum only.
                 else:
 
                     cal1E2max = cal1E
@@ -285,6 +290,7 @@ for event in intree:
 
         numHits += 1
 
+    # Convert the lists into numpy arrays.
     Cellids = n.array(Ecal_cell)
     Energies = n.array(Ecal1_E)
     Etas = n.array(Ecal_Eta)
@@ -299,21 +305,31 @@ for event in intree:
         smoothenergies = savgol_filter(Energies,len(Energies),4)
 
     print len(smoothenergies), len(Energies)'''
+    # If there were more than 2 Energies recorded in the barrel, then find the extremum points of
+    # these energies and sort the list of energies at these extremum indices.
     if len(Energies) > 2:
         MaxInd = argrelextrema(Energies, n.greater)
-        MaxInd2 = find_peaks_cwt(Energies,n.arange(1,5))
+        #MaxInd2 = find_peaks_cwt(Energies,n.arange(1,5))
 
         Maxes = n.sort(Energies[MaxInd])
-        Maxes2 = n.sort(Energies[MaxInd2])
+        #Maxes2 = n.sort(Energies[MaxInd2])
         #print Maxes
         #print Maxes2
         #print n.amax(Maxes)
+
+    # If there are any extremums, then check if the largest extremum is bigger than the 1st maximum
+    # recorded earlier. If it is, update the 2nd and 1st maxima.
         try:
             if n.amax(Maxes) > cal1Emax:
+                cal1E2max = cal1Emax
+                cal1Phi2max = cal1Phimax
+                cal1Eta2max = cal1Etamax
                 cal1Emax = n.amax(Maxes)
                 cal1Phimax = Phis[n.where(Energies == cal1Emax)[0][0]]
                 cal1Etamax = Etas[n.where(Energies == cal1Emax)[0][0]]
 
+            # If the maximal extremum energy is less than the 1st maximum but greater than the 2nd
+            # maximum, set it as the 2nd maximum.
             if n.float(n.amax(Maxes)) < n.float(cal1Emax):
                 if n.float(n.amax(Maxes)) > n.float(cal1E2max):
                     #print "found"
@@ -321,11 +337,14 @@ for event in intree:
                     cal1Phi2max = Phis[n.where(Energies == cal1E2max)[0][0]]
                     cal1Eta2max = Etas[n.where(Energies == cal1E2max)[0][0]]
 
+            # In all other cases, set the 2nd maximum as the second largest extremum value found
+            # to make sure it is a local maxima not a part of the 1st maximum in another cell.
             else:
 
-                cal1E2max = Maxes[len(Maxes)-2]
+                cal1E2max = Maxes[(len(Maxes)-2)]
                 cal1Phi2max = Phis[n.where(Energies == cal1E2max)[0][0]]
                 cal1Eta2max = Etas[n.where(Energies == cal1E2max)[0][0]]
+                
         except(ValueError):
             continue
 
@@ -342,10 +361,13 @@ for event in intree:
     #print "\n"
     #print "test n.where: ", Cellids[n.where(Energies == cal1Emax)[0]], Energies[n.where(Energies == cal1Emax)[0]]'''
     #print "\n"
+
+    # If there were more than 2 energies recorded in the barrel, then set calculate the variables and fill
+    # them in the branches.
     if len(Energies) > 2:
         w3st[0] = Shower_width(Energies, Cellids, 3)
         w21st[0] = Shower_width(Energies, Cellids, 21)
-        eocore[0] = eocorey(cal1Emax, Cellids, Energies)
+        eocore[0] = eocorey(cal1Emax, Cellids, Energies, 3)
         e2max[0] = cal1E2max
         emax[0] = cal1Emax
         edmax[0] = edmaxy(cal1Emax, cal1E2max, Cellids, Energies)
