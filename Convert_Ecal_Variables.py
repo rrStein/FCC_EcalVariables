@@ -296,15 +296,6 @@ for event in intree:
     Etas = n.array(Ecal_Eta)
     Phis = n.array(Ecal_Phi)
 
-    '''if len(Energies) > 17:
-        smoothenergies = savgol_filter(Energies,17,4)
-    #    smoothenergies = savgol_filter(Energies,17,4)
-    elif len(Energies)%2 == 0:
-        smoothenergies = savgol_filter(Energies,len(Energies)-1,4)
-    else:
-        smoothenergies = savgol_filter(Energies,len(Energies),4)
-
-    print len(smoothenergies), len(Energies)'''
     # If there were more than 2 Energies recorded in the barrel, then find the extremum points of
     # these energies and sort the list of energies at these extremum indices.
     if len(Energies) > 2:
@@ -344,23 +335,9 @@ for event in intree:
                 cal1E2max = Maxes[(len(Maxes)-2)]
                 cal1Phi2max = Phis[n.where(Energies == cal1E2max)[0][0]]
                 cal1Eta2max = Etas[n.where(Energies == cal1E2max)[0][0]]
-                
+
         except(ValueError):
             continue
-
-   # if cal1Emax == 0. or cal1E2max == 0:
-       # #print cal1Emax, cal1E2max, Energies
-    ##print "All recorded energies: ", Energies
-    ##print Cellids, "\n", n.unique(Cellids)
-    #print "No. of energies: ", len(Energies), "No. of cells: ", len(Phis), "No. of unique cells: ", len(n.unique(Phis))
-    #print "1st maximum: ", cal1Emax, "and cell: ", cal1Phimax
-    #print "2nd maximum: ", cal1E2max, "and cell: ",  cal1Phi2max
-    '''#print "The energies using numpy.where: 1st max: ", Energies[n.where(Energies == cal1Emax)[0][0]], "2nd max: ",Energies[n.where(Energies == cal1E2max)[0][0]]
-    #print "The cells using numpy.where: 1st max cell: ", Cellids[n.where(Energies == cal1Emax)[0][0]], "2nd max cell: ", Cellids[n.where(Energies == cal1E2max)[0][0]]
-    ev_nRechits[0] = numHits
-    #print "\n"
-    #print "test n.where: ", Cellids[n.where(Energies == cal1Emax)[0]], Energies[n.where(Energies == cal1Emax)[0]]'''
-    #print "\n"
 
     # If there were more than 2 energies recorded in the barrel, then set calculate the variables and fill
     # them in the branches.
