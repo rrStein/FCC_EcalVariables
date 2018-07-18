@@ -45,10 +45,10 @@ def signy(y):
 
 def Shower_width(Energies, Cellids, wxst):
 
-    strips = n.unique(Cellids)
+    #strips = n.unique(Cellids)
     top = 0
     bot = 0
-    cellenergies = n.zeros(len(strips),dtype=float)
+    '''cellenergies = n.zeros(len(strips),dtype=float)
     i = 0
 
     try:
@@ -56,52 +56,60 @@ def Shower_width(Energies, Cellids, wxst):
             cellenergies[n.where(strips == cell)[0][0]] = sum(Energies[n.where(Cellids == cell)[0]])
 
     except(ValueError):
+        return "NaN"'''
+    k = 0
+    imaxphi = int(Cellids[n.argmax(Energies)][0])
+    imaxeta = int(Cellids[n.argmax(Energies)][1])
+    while k < wxst:
+        for i in Cellids:
+            try:
+                if int(i[0]) + int(i[1]) > (imaxphi + imaxeta - wxst) and int(i[0]) + int(i[1]) < (imaxphi + imaxeta + wxst):
+                    top += sum(Energies[n.where(Cellids == i)[0]])*(((int(i[0])+int(i[1])-imaxphi-imaxeta)**2))
+                    bot += sum(Energies[n.where(Cellids == i)[0]])
 
-        return "NaN"
+                    k += 1
 
-    imax = int(strips[n.argmax(cellenergies)])
+                else:
+                    top += 0
+                    bot += 0
 
-    for i in strips:
+            except(IndexError):
+                top += 0
+                bot += 0
 
-        try:
-            if int(i) > (imax - wxst) and int(i) < (imax + wxst):
-                top += sum(Energies[n.where(Cellids == i)[0]])*(((int(i)-imax)**2))
-                bot += sum(Energies[n.where(Cellids == i)[0]])
-            else:
-                continue
-
-        except(IndexError):
-
-            top += 0
-            bot += 0
-
-        i += 1
+        
 
 	Wnst = m.sqrt((top/bot))
-    #print Wnst
     return Wnst
 
 def edmaxy(Emax,E2ndmax,Cellids,Energies):
 
     try:
-        strip2max = Cellids[n.where(Energies == E2ndmax)[0][0]]
-        stripmax = Cellids[n.where(Energies == Emax)[0][0]]
-        #print stripmax, strip2max
-    except(IndexError):
-        print "indexerror"
-        return 0
 
-    strip2E = 0.
+        strip2max = Cellids[n.where(Energies == E2ndmax)[0][0]]
+        strip2maxphi = int(strip2max[0])
+        strip2maxeta = int(strip2max[1])
+        stripmax = Cellids[n.where(Energies == Emax)[0][0]]
+        stripmaxphi = int(stripmax[0])
+        stripmaxeta = int(stripmax[1])
+
+    except(IndexError):
+
+        print "indexerror"
+        return -1
+
+    #strip2E = 0.
     stripminE = []
     i = 0
 
     while i < len(Cellids):
 
-        if Cellids[i] == strip2max:
-            strip2E += Energies[i]
+        #if int(Cellids[i][0]) == strip2maxphi:
+        #    strip2E += Energies[i]
 
-        if (Cellids[i] > strip2max and Cellids[i] < stripmax) or (Cellids[i] > stripmax and Cellids[i] < strip2max):
-            stripminE.append(Energies[i])
+        if (int(Cellids[i][0]) >= strip2maxphi and int(Cellids[i][0]) <= stripmaxphi) or (int(Cellids[i][0]) >= stripmaxphi and int(Cellids[i][0]) <= strip2maxphi):
+            if (int(Cellids[i][1]) >= strip2maxeta and int(Cellids[i][1]) <= stripmaxeta) or (int(Cellids[i][1]) >= stripmaxeta and int(Cellids[i][1]) <= strip2maxeta):
+                stripminE.append(Energies[i])
 
         i += 1
 
@@ -131,56 +139,32 @@ def edmaxy(Emax,E2ndmax,Cellids,Energies):
     return edmax
 
 def eocorey(Emax,Cellids,Energies):
-    try:
+    '''try:
         cells = n.unique(Cellids)
         cellenergies = n.zeros(len(cells),dtype=float)
         for cell in cells:
             cellenergies[n.where(cells == cell)[0][0]] = sum(Energies[n.where(Cellids == cell)[0]])
-        stripmax = int(cells[n.argmax(cellenergies)])
-    except(IndexError):
-        return 0
+            '''
+    stripmaxphi = int(Cellids[n.argmax(Energies)][0])
+    stripmaxeta = int(Cellids[n.argmax(Energies)][1])
+    #except(IndexError):
+    #    return 0
     E3 = 0.
     E1 = 0.
     i = 0
 
     while i < len(Cellids):
 
-        if int(Cellids[i]) <= stripmax + 3 and int(Cellids[i]) >= stripmax - 3:
+        if int(Cellids[i][0]) + int(Cellids[i][1]) <= stripmaxphi + stripmaxeta + 3 and int(Cellids[i][0])+int(Cellids[i][1]) >= stripmaxphi + stripmaxeta - 3:
             E3 += Energies[i]
 
-            if int(Cellids[i]) >= stripmax - 1 and int(Cellids[i]) <= stripmax + 1:
+            if int(Cellids[i][0]) + int(Cellids[i][1]) <= stripmaxphi + stripmaxeta + 1 and int(Cellids[i][0])+int(Cellids[i][1]) >= stripmaxphi + stripmaxeta - 1:
                 E1 += Energies[i]
 
         i += 1
 
     eocore = (E3 - E1) / E1
     return eocore
-
-def savitzky_golay(y, window_size, order, deriv=0, rate=1):
-
-    import numpy as np
-    from math import factorial
-
-    try:
-        window_size = np.abs(np.int(window_size))
-        order = np.abs(np.int(order))
-    except ValueError, msg:
-        raise ValueError("window_size and order have to be of type int")
-    if window_size % 2 != 1 or window_size < 1:
-        raise TypeError("window_size size must be a positive odd number")
-    if window_size < order + 2:
-        raise TypeError("window_size is too small for the polynomials order")
-    order_range = range(order+1)
-    half_window = (window_size -1) // 2
-    # precompute coefficients
-    b = np.mat([[k**i for i in order_range] for k in range(-half_window, half_window+1)])
-    m = np.linalg.pinv(b).A[deriv] * rate**deriv * factorial(deriv)
-    # pad the signal at the extremes with
-    # values taken from the signal itself
-    firstvals = y[0] - np.abs( y[1:half_window+1][::-1] - y[0] )
-    lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
-    y = np.concatenate((firstvals, y, lastvals))
-    return np.convolve( m[::-1], y, mode='valid')
 
 ev_num = n.zeros(1, dtype=int)
 ev_nRechits = n.zeros(1, dtype=int)
@@ -263,7 +247,7 @@ for event in intree:
             eta = int(Eta) - 169*0.01
             Phi = ecalBarrel_decoder.get(c.core.cellId, "phi")
             Ecal_Eta.append(Eta)
-            Ecal_cell.append(int(str(Eta)+str(Phi)))
+            Ecal_cell.append([Phi,Eta])
             Ecal1_E.append(cal1E)
             Ecal_Phi.append(Phi)
 
@@ -315,53 +299,56 @@ for event in intree:
         smoothenergies = savgol_filter(Energies,len(Energies),4)
 
     print len(smoothenergies), len(Energies)'''
+    if len(Energies) > 2:
+        MaxInd = argrelextrema(Energies, n.greater)
+        MaxInd2 = find_peaks_cwt(Energies,n.arange(1,5))
 
-    MaxInd = argrelextrema(Energies, n.greater)
-    MaxInd2 = find_peaks_cwt(Energies,n.arange(1,5))
+        Maxes = n.sort(Energies[MaxInd])
+        Maxes2 = n.sort(Energies[MaxInd2])
+        #print Maxes
+        #print Maxes2
+        #print n.amax(Maxes)
+        try:
+            if n.amax(Maxes) > cal1Emax:
+                cal1Emax = n.amax(Maxes)
+                cal1Phimax = Phis[n.where(Energies == cal1Emax)[0][0]]
+                cal1Etamax = Etas[n.where(Energies == cal1Emax)[0][0]]
 
-    Maxes = n.sort(Energies[MaxInd])
-    Maxes2 = n.sort(Energies[MaxInd2])
-    print Maxes
-    print Maxes2
-    print n.amax(Maxes)
+            if n.float(n.amax(Maxes)) < n.float(cal1Emax):
+                if n.float(n.amax(Maxes)) > n.float(cal1E2max):
+                    #print "found"
+                    cal1E2max = n.amax(Maxes)
+                    cal1Phi2max = Phis[n.where(Energies == cal1E2max)[0][0]]
+                    cal1Eta2max = Etas[n.where(Energies == cal1E2max)[0][0]]
 
-    if n.amax(Maxes) > cal1Emax:
-        cal1Emax = n.amax(Maxes)
-        cal1Phimax = Phis[n.where(Energies == cal1Emax)[0][0]]
+            else:
 
-
-    if n.float(n.amax(Maxes)) < n.float(cal1Emax):
-        if n.float(n.amax(Maxes)) > n.float(cal1E2max):
-            print "found"
-            cal1E2max = n.amax(Maxes)
-            cal1Phi2max = Phis[n.where(Energies == cal1E2max)[0][0]]
-
-    else:
-
-        cal1E2max = Maxes[len(Maxes)-2]
-        cal1Phi2max = Phis[n.where(Energies == cal1E2max)[0][0]]
-
+                cal1E2max = Maxes[len(Maxes)-2]
+                cal1Phi2max = Phis[n.where(Energies == cal1E2max)[0][0]]
+                cal1Eta2max = Etas[n.where(Energies == cal1E2max)[0][0]]
+        except(ValueError):
+            continue
 
    # if cal1Emax == 0. or cal1E2max == 0:
-       # print cal1Emax, cal1E2max, Energies
-    #print "All recorded energies: ", Energies
-    #print Cellids, "\n", n.unique(Cellids)
-    print "No. of energies: ", len(Energies), "No. of cells: ", len(Phis), "No. of unique cells: ", len(n.unique(Phis))
-    print "1st maximum: ", cal1Emax, "and cell: ", cal1Phimax
-    print "2nd maximum: ", cal1E2max, "and cell: ",  cal1Phi2max
-    '''print "The energies using numpy.where: 1st max: ", Energies[n.where(Energies == cal1Emax)[0][0]], "2nd max: ",Energies[n.where(Energies == cal1E2max)[0][0]]
-    print "The cells using numpy.where: 1st max cell: ", Cellids[n.where(Energies == cal1Emax)[0][0]], "2nd max cell: ", Cellids[n.where(Energies == cal1E2max)[0][0]]
+       # #print cal1Emax, cal1E2max, Energies
+    ##print "All recorded energies: ", Energies
+    ##print Cellids, "\n", n.unique(Cellids)
+    #print "No. of energies: ", len(Energies), "No. of cells: ", len(Phis), "No. of unique cells: ", len(n.unique(Phis))
+    #print "1st maximum: ", cal1Emax, "and cell: ", cal1Phimax
+    #print "2nd maximum: ", cal1E2max, "and cell: ",  cal1Phi2max
+    '''#print "The energies using numpy.where: 1st max: ", Energies[n.where(Energies == cal1Emax)[0][0]], "2nd max: ",Energies[n.where(Energies == cal1E2max)[0][0]]
+    #print "The cells using numpy.where: 1st max cell: ", Cellids[n.where(Energies == cal1Emax)[0][0]], "2nd max cell: ", Cellids[n.where(Energies == cal1E2max)[0][0]]
     ev_nRechits[0] = numHits
-    print "\n"
-    print "test n.where: ", Cellids[n.where(Energies == cal1Emax)[0]], Energies[n.where(Energies == cal1Emax)[0]]'''
-    print "\n"
+    #print "\n"
+    #print "test n.where: ", Cellids[n.where(Energies == cal1Emax)[0]], Energies[n.where(Energies == cal1Emax)[0]]'''
+    #print "\n"
     if len(Energies) > 2:
-        w3st[0] = Shower_width(Energies, Phis, 3)
-        w21st[0] = Shower_width(Energies, Phis, 21)
-        eocore[0] = eocorey(cal1Emax, Phis, Energies)
+        w3st[0] = Shower_width(Energies, Cellids, 3)
+        w21st[0] = Shower_width(Energies, Cellids, 21)
+        eocore[0] = eocorey(cal1Emax, Cellids, Energies)
         e2max[0] = cal1E2max
         emax[0] = cal1Emax
-        edmax[0] = edmaxy(cal1Emax, cal1E2max, Phis, Energies)
+        edmax[0] = edmaxy(cal1Emax, cal1E2max, Cellids, Energies)
     else:
         continue
 
